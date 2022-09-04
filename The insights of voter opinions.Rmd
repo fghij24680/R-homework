@@ -1,0 +1,388 @@
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+# echo=FALSE will stop the code chunk from appearing in the knit document
+# warning=FALSE and message=FALSE will stop R messages from appearing in the knit document
+library(tidyverse)
+
+# the data is not in the csv form we usually use, but in an R format, .rds.
+# the following line saves it as ces19 and you can work with it as you're used to now
+ces19 <- readRDS("/cloud/project/ces19.rds")
+
+gender_vec <- numeric(0)
+n <- 0
+i <- 1
+for (gender_data in ces19$gender){
+  if (gender_data == "A man"){
+    gender_vec[i] <- 1
+    i <- i+1
+  } else if (gender_data == "A woman"){
+    gender_vec[i] <- 0
+    i <- i+1
+  } else {
+    gender_vec[i] <- 1.5
+    i <- i+1
+    n <- n+1
+  }
+}
+
+N = length(gender_vec)
+
+edu_vec <- numeric(0)
+i <- 1
+for (edu_data in ces19$education){
+  if (edu_data == "Some elementary school"){
+    edu_vec[i] <- 1
+    i <- i+1
+  } else if (edu_data == "Completed elementary school"){
+    edu_vec[i] <- 2
+    i <- i+1
+  } else if (edu_data == "Some secondary/ high school"){
+    edu_vec[i] <- 3
+    i <- i+1
+  } else if (edu_data == "Completed secondary/ high school"){
+    edu_vec[i] <- 4
+    i <- i+1
+  } else if (edu_data == "Some technical, community college, CEGEP, College Classique"){
+    edu_vec[i] <- 5
+    i <- i+1
+  } else if (edu_data == "Completed technical, community college, CEGEP, College Classique"){
+    edu_vec[i] <- 6
+    i <- i+1
+  } else if (edu_data == "Some university"){
+    edu_vec[i] <- 7
+    i <- i+1
+  } else if (edu_data == "Bachelor's degree"){
+    edu_vec[i] <- 8
+    i <- i+1
+  } else if (edu_data == "Master's degree"){
+    edu_vec[i] <- 9
+    i <- i+1
+  } else if (edu_data == "Professional degree or doctorate"){
+    edu_vec[i] <- 10
+    i <- i+1
+  } else {
+    edu_vec[i] <- 0
+    i <- i+1
+  }
+}
+
+dem_vec <- numeric(0)
+i <- 1
+for (dem_data in ces19$demsat){
+  if (dem_data == "Very satisfied"){
+    dem_vec[i] <- 4
+    i <- i+1
+  } else if (dem_data == "Fairly satisfied"){
+    dem_vec[i] <- 3
+    i <- i+1
+  } else if (dem_data == "Not very satisfied"){
+    dem_vec[i] <- 2
+    i <- i+1
+  } else if (dem_data == "Not at all satisfied"){
+    dem_vec[i] <- 1
+    i <- i+1
+  } else {
+    dem_vec[i] <- 0
+    i <- i+1
+  }
+}
+
+rating_vec <- ces19$party_rating_23
+rating_vec[is.na(rating_vec)] <- 0
+
+q1_frame <- data.frame(1:N)
+q1_frame$age <- ces19$age
+q1_frame$gender <- gender_vec
+q1_frame$education <- edu_vec
+q1_frame$demsat <- dem_vec
+q1_frame$rating <- rating_vec
+  
+fit <- lm(rating~age+gender+education+demsat, data=q1_frame)
+
+# see the project information page for more information: https://q.utoronto.ca/courses/184002/pages/project
+
+```
+
+
+## Introduction
+
+In this project, I will provide election suggestions for the Liberal Party of Canada through the analysis of statistical data. 
+
+
+I'll focus on the factors that affect election results, including age, gender, education, and so on, to see how they affect people's choices. With reliable models, we may be able to predict people's choices and change campaign strategies accordingly.
+
+At the same time, I will also compare the Liberal Party with its main competitor, the conservative party, to see if a certain group of people have a significant preference for the choice of political parties.
+
+The methods I will use are linear regression and hypothesis test.
+
+
+## Question 1
+
+Based on some information that we know about a person, can we predict how do they feel about the Liberal Party? 
+
+This question can show which factors determine the rating of the Liberal Party. The population I’m trying to make inference is the whole sample in the survey. I'll use the method of linear regression.
+
+### Hypothesis
+
+The rating of the Liberal Party are determined by the age, gender, education level and how people are satisfied with the way democracy works.
+
+### Data instruction
+
+The following columns in *ces19* are concerned:
+
+*age* , *gender* , *education* , *demsat* , *party_rating_23*
+
+---
+
+The first step is data collection and data cleaning. We initialize a new frame to store the data in Question 1, and put the data into the frame. The following code is an example of dealing with the gender data.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+gender_vec <- numeric(0)
+n <- 0
+i <- 1
+for (gender_data in ces19$gender){
+  if (gender_data == "A man"){
+    gender_vec[i] <- 1
+    i <- i+1
+  } else if (gender_data == "A woman"){
+    gender_vec[i] <- 0
+    i <- i+1
+  } else {
+    gender_vec[i] <- 1.5
+    i <- i+1
+    n <- n+1
+  }
+}
+```
+
+---
+
+Take a look at the data. The following figure shows that the rating may increase with more satisfaction level of democracy. Here I chose the **boxplot** because the sample size is too large.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+boxplot(rating~demsat,data = q1_frame)
+```
+
+---
+
+Statistically, we use the linear model: 
+
+
+$\widehat{party\_rating\_23}=\widehat{b_0}+\widehat{\ b_1}\times age+\widehat{b_2}\times gender$
+
+$+\widehat{b_3}\times education+\widehat{b_4}\times demsat$
+
+### R codes (run in background)
+fit <- lm(rating~age+gender+education+demsat,
+          data=q1_frame)
+
+summary(fit)
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+fit <- lm(rating~age+gender+education+demsat,
+          data=q1_frame)
+summary(fit)
+```
+
+
+### Model result
+
+$\widehat{party\_rating\_23}=4.39-0.17\times age-2.2\times gender$
+
+$+1.8\times education+13.7\times demsat$
+
+From the summary of the result, all the coefficients are significant. The model shows that the following kind of person will be more likely to support the Liberal Party:
+
+ - Young people;
+ - Women;
+ - People with higher educational level; and
+ - People who are satisfied with the way democracy works
+ 
+## Question 2
+
+Does the age factor significantly influence how satisfied are people with the performance of the federal government under Justin Trudeau?
+
+The question concerns whether people of different ages have different satisfaction with the Liberals. 
+
+\vspace{0.6cm}
+
+### Hypothesis
+
+People who are very satisfied with the government have different age with those who are not very satisfied.
+
+---
+
+And the columns in *ces19* concerned are *age* and *fed_gov_sat*
+
+The data collection is similar to Question 1.
+
+To show the data in the **histogram**, I generated a frame for question 2 *q2_frame* with columns of the age and the satisfaction level, 1 for *Very satisfied* and 0 for *Not very satisfied*.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+q2_sat_vec <- numeric(0)
+q2_nsat_vec <- numeric(0)
+count_1 <- 1
+count_2 <- 1
+i <- 1
+for (sat_data in ces19$fed_gov_sat){
+  if (sat_data == "Very satisfied"){
+    q2_sat_vec[count_1] <- ces19$age[i]
+    i <- i+1
+    count_1 <- count_1+1
+  } else if (sat_data == "Not very satisfied"){
+    q2_nsat_vec[count_2] <- ces19$age[i]
+    i <- i+1
+    count_2 <- count_2+1
+  } else {i <- i+1}
+}
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+q2_age_vec <- numeric(0)
+q2_s_vec <- numeric(0)
+count <- 1
+i <- 1
+for (sat_data in ces19$fed_gov_sat){
+  if (sat_data == "Very satisfied"){
+    q2_age_vec[count] <- ces19$age[i]
+    q2_s_vec[count] <- 1
+    i <- i+1
+    count <- count+1
+  } else if (sat_data == "Not very satisfied"){
+    q2_age_vec[count] <- ces19$age[i]
+    q2_s_vec[count] <- 0
+    i <- i+1
+    count <- count+1
+  } else {i <- i+1}
+}
+
+nums = length(q2_s_vec)
+q2_frame <- data.frame(1:nums)
+q2_frame$age <- q2_age_vec
+q2_frame$sat <- q2_s_vec
+q2_frame$sat <- factor(q2_frame$sat)
+
+library(ggplot2)
+```
+
+---
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results = 'hide'}
+ggplot(q2_frame, aes(x = age, fill = sat)) + 
+  geom_histogram(position = "identity", alpha = 0.4)
+```
+
+---
+
+It seems that younger people may be more satisfied with the government.
+
+Statistically, we use the hypothesis test.
+
+$H_0:\ \mu_1=\mu_2$
+
+$H_1:\ \mu_1\neq\mu_2$
+
+Where $\mu_1$ and $\mu_2$ are the average age of people who are or aren't satisfied with the government.
+
+---
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+t_test = t.test(q2_sat_vec,q2_nsat_vec)
+print(t_test)
+```
+
+Since  $\mu_1=46.53$, $\mu_2=48.12$ and p-value<0.05, it's statistically significant that younger people are more satisfied with the government.
+
+## Question 3
+
+Does the feeling about the immigrants significantly influence the first choice to vote for?
+
+The population I’m trying to make inference is the people whose first choice to vote for is Liberal Party or Conservative Party, the main competitors of the election.
+
+\vspace{0.6cm}
+
+### Hypothesis
+
+People who vote for is Liberal Party or Conservative Party have different opinions with immigrants.
+
+---
+
+And the columns in *ces19* concerned are *votechoice* and *groups_therm_2*
+
+Also, to show the data in the **histogram**, I generated a frame for question 3 *q3_frame* with columns of the feeling about the immigrants and the vote, 1 for *Liberal Party* and 0 for *Conservative Party*.
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+q3_lib_vec <- numeric(0)
+q3_con_vec <- numeric(0)
+count_1 <- 1
+count_2 <- 1
+i <- 1
+for (vote in ces19$votechoice){
+  if(is.na(vote)){i <- i+1}
+  else if (vote == "Liberal Party"){
+    q3_lib_vec[count_1] <- ces19$groups_therm_2[i]
+    i <- i+1
+    count_1 <- count_1+1
+  } else if (vote == "Conservative Party"){
+    q3_con_vec[count_2] <- ces19$groups_therm_2[i]
+    i <- i+1
+    count_2 <- count_2+1
+  } else {i <- i+1}
+}
+```
+
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+q3_imm_vec <- numeric(0)
+q3_vote_vec <- numeric(0)
+count <- 1
+for (item in q3_lib_vec){
+  q3_vote_vec[count] <- 1
+  q3_imm_vec[count] <- item
+  count <- count + 1
+}
+for (item in q3_con_vec){
+  q3_vote_vec[count] <- 0
+  q3_imm_vec[count] <- item
+  count <- count + 1
+}
+  
+nums3 = length(q3_imm_vec)
+q3_frame <- data.frame(1:nums3)
+q3_frame$immigrant <- q3_imm_vec
+q3_frame$vote <- q3_vote_vec
+q3_frame$vote <- factor(q3_frame$vote)
+
+library(ggplot2)
+library(grid)
+```
+
+
+
+---
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, results = 'hide'}
+ggplot(q3_frame, aes(x = immigrant, fill = vote)) + 
+  geom_histogram(position = "identity", alpha = 0.4)
+```
+
+---
+
+It seems that people who vote for Liberal Party have better feelings about immigrants.
+
+Statistically, we use the hypothesis test.
+
+$H_0:\ \mu_1=\mu_2$
+
+$H_1:\ \mu_1\neq\mu_2$
+
+Where $\mu_1$ and $\mu_2$ are the average feeling score of people who vote for Liberal Party or Conservative Party.
+
+---
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+t_test3 = t.test(q3_lib_vec,q3_con_vec)
+print(t_test3)
+```
+
+Since  $\mu_1=69.17$, $\mu_2=50.80$ and p-value<0.05, it's statistically significant that people who vote for Liberal Party have better feelings about immigrants.
